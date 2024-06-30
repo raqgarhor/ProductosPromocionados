@@ -1,4 +1,5 @@
-import { Product, Order, Restaurant, RestaurantCategory, ProductCategory } from '../models/models.js'
+// SOLUCIÓN
+import { sequelizeSession, Product, Order, Restaurant, RestaurantCategory, ProductCategory } from '../models/models.js'
 import Sequelize from 'sequelize'
 
 const indexRestaurant = async function (req, res) {
@@ -106,6 +107,50 @@ const popular = async function (req, res) {
     res.status(500).send(err)
   }
 }
+// SOLUCIÓN
+const promote = async function (req, res) {
+  const t = await sequelizeSession.transaction()
+  try {
+    const product = await Product.findByPk(req.params.productId)
+    const existingPromotedProduct = await Product.findOne({ where: { restaurantId: product.restaurantId, promoted: true } })
+    if (existingPromotedProduct) {
+      await Product.update(
+        { promoted: false },
+        { where: { restaurantId: existingPromotedProduct.restaurantId } },
+        { transaction: t }
+      )
+    }
+    await Product.update(
+      { promoted: true },
+      { where: { restaurantId: product.restaurantId } },
+      { transaction: t }
+    )
+    await t.commit()
+    const updatedProduct = await Product.findByPk(req.params.productId)
+    res.json(updatedProduct)
+  } catch (err) {
+    await t.rollback()
+    res.status(500).send(err)
+  }
+}
+/*
+SOLUCIÓN SI TRANSACCIÓN
+const promote = async function (req, res) {
+  try {
+    const product = await Product.findByPk(req.params.productId)
+    const productToBeDemoted = await Product.findOne({ where: { restaurantId: product.restaurantId, promoted: true } })
+    if (productToBeDemoted) {
+      productToBeDemoted.promoted = false
+      await productToBeDemoted.save()
+    }
+    product.promoted = true
+    const promotedProduct = await product.save()
+    res.json(promotedProduct)
+  } catch (err) {
+    res.status(500).send(err)
+  }
+}
+*/
 
 const ProductController = {
   indexRestaurant,
@@ -113,6 +158,7 @@ const ProductController = {
   create,
   update,
   destroy,
-  popular
+  popular,
+  promote // SOLUCIÓN
 }
 export default ProductController

@@ -1,5 +1,5 @@
 import { check } from 'express-validator'
-import { Restaurant } from '../../models/models.js'
+import { Product, Restaurant } from '../../models/models.js'
 import { checkFileIsImage, checkFileMaxSize } from './FileValidationHelper.js'
 
 const maxFileSize = 2000000 // around 2Mb
@@ -14,6 +14,26 @@ const checkRestaurantExists = async (value, { req }) => {
     return Promise.reject(new Error(err))
   }
 }
+/*
+SI EL PROPIETARIO INDICA QUE EL PRODUCTO DEBE ESTAR PROMOCIONADO, PERO YA EXISTÍAN PRODUCTOS PROMOCIONADOS DEL MISMO
+RESTAURANTE, AL PULSAR EL BOTÓN SAVE SE MOSTRARÁ UN ERROR Y NO SE CREARÁ O EDITARÁ EL PRODUCTO.
+*/
+// SOLUCIÓN
+const checkOnlyOneProductPromoted = async (promotedValue, { req }) => {
+  if (promotedValue) {
+    try {
+      const ProductAlreadyPromoted = await Product.count({ where: { promoted: true, restaurantId: req.body.restaurantId } })
+      if (ProductAlreadyPromoted !== 0) {
+        return Promise.reject(new Error('Only one product can be promoted.'))
+      } else {
+        return Promise.resolve()
+      }
+    } catch (err) {
+      return Promise.reject(new Error(err))
+    }
+  }
+}
+
 const create = [
   check('name').exists().isString().isLength({ min: 1, max: 255 }).trim(),
   check('description').optional({ checkNull: true, checkFalsy: true }).isString().isLength({ min: 1 }).trim(),
@@ -28,7 +48,9 @@ const create = [
   }).withMessage('Please upload an image with format (jpeg, png).'),
   check('image').custom((value, { req }) => {
     return checkFileMaxSize(req, 'image', maxFileSize)
-  }).withMessage('Maximum file size of ' + maxFileSize / 1000000 + 'MB')
+  }).withMessage('Maximum file size of ' + maxFileSize / 1000000 + 'MB'),
+  // SOLUCIÓN
+  check('promoted').custom(checkOnlyOneProductPromoted).withMessage('Only one product can be promoted.')
 ]
 
 const update = [
@@ -45,7 +67,9 @@ const update = [
   check('image').custom((value, { req }) => {
     return checkFileMaxSize(req, 'image', maxFileSize)
   }).withMessage('Maximum file size of ' + maxFileSize / 1000000 + 'MB'),
-  check('restaurantId').not().exists()
+  check('restaurantId').not().exists(),
+  // SOLUCIÓN
+  check('promoted').custom(checkOnlyOneProductPromoted).withMessage('Only one product can be promoted.')
 ]
 
 export { create, update }

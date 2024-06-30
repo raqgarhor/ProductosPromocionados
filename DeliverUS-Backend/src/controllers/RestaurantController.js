@@ -12,6 +12,7 @@ const index = async function (req, res) {
       },
         order: [[{ model: RestaurantCategory, as: 'restaurantCategory' }, 'name', 'ASC']]
       }
+
     )
     res.json(restaurants)
   } catch (err) {
@@ -47,6 +48,11 @@ const create = async function (req, res) {
   }
 }
 
+/*
+ADEMÁS, LOS RESTAURANTES PROMOCIONADOS APARECERÁN SIEMPRE AL PRINCIPIO DE LOS LISTADOS DE RESTAURANTES QUE SE LE
+PRESENTAN TANTO A LOS DUEÑOS COMO A LOS CLIENTES.
+*/
+// SOLUCIÓN
 const show = async function (req, res) {
   // Only returns PUBLIC information of restaurants
   try {
@@ -61,7 +67,7 @@ const show = async function (req, res) {
         model: RestaurantCategory,
         as: 'restaurantCategory'
       }],
-      order: [[{ model: Product, as: 'products' }, 'order', 'ASC']]
+      order: [[{ model: Product, as: 'products' }, 'promoted', 'DESC']]
     }
     )
     res.json(restaurant)

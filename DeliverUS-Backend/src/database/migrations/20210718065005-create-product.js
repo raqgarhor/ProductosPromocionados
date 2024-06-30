@@ -48,6 +48,8 @@ module.exports = {
           key: 'id'
         }
       },
+      // SOLUCIÓN
+      promoted: Sequelize.BOOLEAN,
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
