@@ -116,13 +116,13 @@ const promote = async function (req, res) {
     if (existingPromotedProduct) {
       await Product.update(
         { promoted: false },
-        { where: { restaurantId: existingPromotedProduct.restaurantId } },
+        { where: { id: existingPromotedProduct.id } },
         { transaction: t }
       )
     }
     await Product.update(
       { promoted: true },
-      { where: { restaurantId: product.restaurantId } },
+      { where: { id: product.id } },
       { transaction: t }
     )
     await t.commit()
@@ -134,7 +134,7 @@ const promote = async function (req, res) {
   }
 }
 /*
-SOLUCIÓN SI TRANSACCIÓN
+SOLUCIÓN SIN TRANSACCIÓN
 const promote = async function (req, res) {
   try {
     const product = await Product.findByPk(req.params.productId)
@@ -151,7 +151,6 @@ const promote = async function (req, res) {
   }
 }
 */
-
 const ProductController = {
   indexRestaurant,
   show,

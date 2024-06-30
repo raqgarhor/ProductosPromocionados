@@ -18,7 +18,7 @@ export default function CreateProductScreen ({ navigation, route }) {
   const [productCategories, setProductCategories] = useState([])
   const [backendErrors, setBackendErrors] = useState()
 
-  const initialProductValues = { name: null, description: null, price: null, order: null, restaurantId: route.params.id, productCategoryId: null, availability: true }
+  const initialProductValues = { name: null, description: null, price: null, order: null, restaurantId: route.params.id, productCategoryId: null, availability: true, promoted: false }
   const validationSchema = yup.object().shape({
     name: yup
       .string()
@@ -149,6 +149,20 @@ export default function CreateProductScreen ({ navigation, route }) {
               />
               <ErrorMessage name={'availability'} render={msg => <TextError>{msg}</TextError> }/>
 
+              {/* SOLUCIÓN */}
+              <TextRegular>Is it promoted?</TextRegular>
+              <Switch
+                trackColor={{ false: GlobalStyles.brandSecondary, true: GlobalStyles.brandPrimary }}
+                thumbColor={values.promoted ? GlobalStyles.brandSecondary : '#f4f3f4'}
+                // onValueChange={toggleSwitch}
+                value={values.promoted}
+                style={styles.switch}
+                onValueChange={value =>
+                  setFieldValue('promoted', value)
+                }
+              />
+              <ErrorMessage name={'promoted'} render={msg => <TextError>{msg}</TextError> }/>
+              {/* SOLUCIÓN */}
               <Pressable onPress={() =>
                 pickImage(
                   async result => {

@@ -19,18 +19,16 @@ SI EL PROPIETARIO INDICA QUE EL PRODUCTO DEBE ESTAR PROMOCIONADO, PERO YA EXIST�
 RESTAURANTE, AL PULSAR EL BOTÓN SAVE SE MOSTRARÁ UN ERROR Y NO SE CREARÁ O EDITARÁ EL PRODUCTO.
 */
 // SOLUCIÓN
-const checkOnlyOneProductPromoted = async (promotedValue, { req }) => {
-  if (promotedValue) {
-    try {
-      const ProductAlreadyPromoted = await Product.count({ where: { promoted: true, restaurantId: req.body.restaurantId } })
-      if (ProductAlreadyPromoted !== 0) {
-        return Promise.reject(new Error('Only one product can be promoted.'))
-      } else {
-        return Promise.resolve()
-      }
-    } catch (err) {
-      return Promise.reject(new Error(err))
+const checkOnlyOneProductPromoted = async (value, { req }) => {
+  try {
+    const ProductAlreadyPromoted = await Product.findOne({ where: { promoted: true, restaurantId: req.body.restaurantId } })
+    if (ProductAlreadyPromoted.length !== 0) {
+      return Promise.reject(new Error('Only one product can be promoted.'))
+    } else {
+      return Promise.resolve()
     }
+  } catch (err) {
+    return Promise.reject(new Error(err))
   }
 }
 

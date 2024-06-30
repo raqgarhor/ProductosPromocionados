@@ -4,17 +4,20 @@ import { StyleSheet, View, FlatList, ImageBackground, Image, Pressable } from 'r
 import { showMessage } from 'react-native-flash-message'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { getDetail } from '../../api/RestaurantEndpoints'
-import { remove } from '../../api/ProductEndpoints'
+import { promote, remove } from '../../api/ProductEndpoints'
 import ImageCard from '../../components/ImageCard'
 import TextRegular from '../../components/TextRegular'
 import TextSemiBold from '../../components/TextSemibold'
 import * as GlobalStyles from '../../styles/GlobalStyles'
 import DeleteModal from '../../components/DeleteModal'
 import defaultProductImage from '../../../assets/product.jpeg'
+import ConfirmationModal from '../../components/ConfirmationModal'
 
 export default function RestaurantDetailScreen ({ navigation, route }) {
   const [restaurant, setRestaurant] = useState({})
   const [productToBeDeleted, setProductToBeDeleted] = useState(null)
+  // SOLUCIÓN
+  const [productToBePromoted, setProductToBePromoted] = useState(null)
 
   useEffect(() => {
     fetchRestaurantDetail()
@@ -60,8 +63,21 @@ export default function RestaurantDetailScreen ({ navigation, route }) {
         imageUri={item.image ? { uri: process.env.API_BASE_URL + '/' + item.image } : defaultProductImage}
         title={item.name}
       >
-        <TextRegular numberOfLines={2}>{item.description}</TextRegular>
-        <TextSemiBold textStyle={styles.price}>{item.price.toFixed(2)}€</TextSemiBold>
+        {/* SOLUCIÓN */}
+        <View style={[{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }]}>
+          <TextRegular numberOfLines={2}>{item.description}</TextRegular>
+          {item.promoted && item.availability &&
+            <TextRegular textStyle={[styles.badge, { color: GlobalStyles.brandGreen, borderColor: GlobalStyles.brandSuccess }]}>
+              ¡En promoción!
+           </TextRegular>
+          }
+          {!item.promoted && item.availability &&
+            <TextRegular textStyle={[styles.badge, { color: GlobalStyles.brandPrimary, borderColor: GlobalStyles.brandPrimary }]}>
+              ¡No promocionado!
+           </TextRegular>
+          }
+        </View>
+        {/* SOLUCIÓN */}
         {!item.availability &&
           <TextRegular textStyle={styles.availability }>Not available</TextRegular>
         }
@@ -102,6 +118,26 @@ export default function RestaurantDetailScreen ({ navigation, route }) {
             </TextRegular>
           </View>
         </Pressable>
+
+        {/* SOLUCIÓN */}
+        <Pressable
+            onPress={() => { setProductToBePromoted(item) }}
+            style={({ pressed }) => [
+              {
+                backgroundColor: pressed
+                  ? GlobalStyles.brandSecondaryTap
+                  : GlobalStyles.brandSecondary
+              },
+              styles.actionButton
+            ]}>
+          <View style={[{ flex: 1, flexDirection: 'row', justifyContent: 'center' }]}>
+            <MaterialCommunityIcons name='octagon' color={'white'} size={20}/>
+            <TextRegular textStyle={styles.text}>
+              Promote
+            </TextRegular>
+          </View>
+        </Pressable>
+        {/* SOLUCIÓN */}
         </View>
       </ImageCard>
     )
@@ -151,6 +187,29 @@ export default function RestaurantDetailScreen ({ navigation, route }) {
       })
     }
   }
+  // SOLUCIÓN
+  const promoteProduct = async (product) => {
+    try {
+      await promote(product.id)
+      await fetchRestaurantDetail()
+      setProductToBePromoted(null)
+      showMessage({
+        message: `Product ${product.name} succesfully promoted`,
+        type: 'success',
+        style: GlobalStyles.flashStyle,
+        titleStyle: GlobalStyles.flashTextStyle
+      })
+    } catch (error) {
+      console.log(error)
+      setProductToBePromoted(null)
+      showMessage({
+        message: `Product ${product.name} could not be promoted.`,
+        type: 'error',
+        style: GlobalStyles.flashStyle,
+        titleStyle: GlobalStyles.flashTextStyle
+      })
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -168,6 +227,13 @@ export default function RestaurantDetailScreen ({ navigation, route }) {
         onConfirm={() => removeProduct(productToBeDeleted)}>
           <TextRegular>If the product belong to some order, it cannot be deleted.</TextRegular>
       </DeleteModal>
+      {/* SOLUCIÓN */}
+      <ConfirmationModal
+        isVisible={productToBePromoted !== null}
+        onCancel={() => setProductToBePromoted(null)}
+        onConfirm={() => promoteProduct(productToBePromoted)}>
+          <TextRegular>This product will be promoted.</TextRegular>
+      </ConfirmationModal>
     </View>
   )
 }
@@ -243,6 +309,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     bottom: 5,
     position: 'absolute',
-    width: '90%'
+    width: '63%' // SOLUCIÓN
+  },
+  // SOLUCIÓN
+  badge: {
+    textAlign: 'center',
+    borderWidth: 2,
+    width: 100,
+    paddingVertical: 2,
+    paddingHorizontal: 10,
+    borderRadius: 10
   }
 })
